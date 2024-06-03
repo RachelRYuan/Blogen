@@ -1,6 +1,6 @@
 Spring Boot Blogen with Vue.js
 ===================================
-This is a [Vue.js](https://vuejs.org) version of my [Blogen](https://github.com/strohs/springboot-blogen) fullstack application.
+This is a [Vue.js](https://vuejs.org) version of [Blogen](https://github.com/strohs/springboot-blogen) fullstack application.
 
 Blogen is a fictitious micro-blogging / message board website that I use as a basis for exploring different frontend and backend
 technologies. 
