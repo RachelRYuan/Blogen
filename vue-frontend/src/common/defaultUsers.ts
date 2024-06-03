@@ -1,9 +1,14 @@
 /**
  * Blogen default usernames and PWs
- * @type {*[]}
+ * @type {Array<{user_name: string, pw: string}>}
  */
 
-export const defaultUsers = [
+export interface DefaultUser {
+  user_name: string;
+  pw: string;
+}
+
+export const defaultUsers: DefaultUser[] = [
   {
     user_name: 'mcgill',
     pw: 'password'
@@ -24,4 +29,4 @@ export const defaultUsers = [
     user_name: 'admin',
     pw: 'adminpassword'
   }
-]
+];
