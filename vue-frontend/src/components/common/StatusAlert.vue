@@ -1,39 +1,41 @@
-// Component for displaying application wide status/info/failure messages in an alert box
+// Component for displaying application wide status/info/failure messages in an
+alert box
 <template>
-
-  <b-alert :variant="computeVariant" fade dismissible :show="show" @dismissed="$emit('dismissed')">
+  <b-alert
+    :variant="computeVariant"
+    fade
+    dismissible
+    :show="show"
+    @dismissed="$emit('dismissed')"
+  >
     {{ message }}
   </b-alert>
-
 </template>
 
 <script>
 // TODO possibly make this an app wide component and move its state into VUEX
 export default {
-  name: 'StatusAlert',
+  name: "StatusAlert",
   props: {
     message: String,
     code: Number,
-    show: Boolean(false)
+    show: Boolean(false),
   },
-  data () {
-    return {
-    }
+  data() {
+    return {};
   },
   computed: {
-    computeVariant () {
+    computeVariant() {
       if (this.code >= 200 && this.code < 300) {
-        return 'success'
+        return "success";
       } else if (this.code >= 400 && this.code <= 500) {
-        return 'danger'
+        return "danger";
       } else {
-        return 'info'
+        return "info";
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -4,10 +4,8 @@
       <div class="container">
         <div class="row">
           <div class="col text-center">
-            <div>
-              <h1 class="display-4">Welcome To Blogen</h1>
-              <p class="lead">Share your thoughts on a variety of topics</p>
-            </div>
+            <h1 class="display-4">Welcome To Blogen</h1>
+            <p class="lead">Share your thoughts on a variety of topics</p>
           </div>
         </div>
       </div>
@@ -18,7 +16,13 @@
       <div class="container">
         <div class="row">
           <div class="col-md text-md-left">
-            <h3><font-awesome-icon icon="keyboard" scale="1.5"></font-awesome-icon> Latest Blogens:</h3>
+            <h3>
+              <font-awesome-icon
+                icon="keyboard"
+                scale="1.5"
+              ></font-awesome-icon>
+              Latest Blogens:
+            </h3>
           </div>
         </div>
       </div>
@@ -32,21 +36,26 @@
 </template>
 
 <script>
-import PostCards from './PostCards'
+import PostCards from "./PostCards";
 
 export default {
-  name: 'home',
-  data () {
-    return {
-      msg: ''
-    }
-  },
+  name: "HomePage",
   components: {
-    appPostCards: PostCards
-  }
-}
+    appPostCards: PostCards,
+  },
+};
 </script>
 
 <style scoped>
-
+#homePage {
+  background-color: #6c757d; /* Adjusted to match bg-secondary */
+}
+#welcome-head-section {
+  background-color: #007bff; /* Adjusted to match bg-primary */
+  color: #fff;
+}
+#main-header {
+  background-color: #6c757d; /* Adjusted to match bg-secondary */
+  color: #fff;
+}
 </style>
