@@ -14,59 +14,65 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * This is an example implementation of the AvatarRepository using jdbcTemplate. It is not used in the project, but
- * kept for reference purposes
- *
+ * Implementation of the AvatarRepository using JdbcTemplate.
+ * This implementation is not currently used in the project, but is kept for
+ * reference purposes.
+ * 
  * Author: Cliff
+ * Refine: Rachel
  */
 @Repository
 @Slf4j
 @Profile("jdbc")
 public class AvatarRepositoryImpl implements AvatarRepository {
 
-    private final String FETCH_SQL_BY_ID = "SELECT id,file_name FROM avatar WHERE id = ?";
+    private static final String FETCH_SQL_BY_ID = "SELECT id, file_name FROM avatar WHERE id = ?";
+    private static final String FETCH_SQL_BY_FILENAME = "SELECT id, file_name FROM avatar WHERE file_name = ?";
+    private static final String FETCH_ALL_FILENAMES = "SELECT DISTINCT file_name FROM avatar ORDER BY file_name";
 
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public AvatarRepositoryImpl( JdbcTemplate jdbcTemplate ) {
+    public AvatarRepositoryImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public Avatar save( Avatar avatar ) {
-        return null;
+    public Avatar save(Avatar avatar) {
+        // Implementation to save Avatar would go here
+        // For example, using jdbcTemplate.update() to insert/update the Avatar entity
+        log.info("Saving Avatar: {}", avatar);
+        return null; // Placeholder for actual save logic
     }
 
     @Override
-    public Optional<Avatar> findById( Long id ) {
-        Avatar avatar;
-        List<Avatar> avatars = jdbcTemplate.query( FETCH_SQL_BY_ID, new AvatarMapper(), id );
-        avatar = avatars.get( 0 );
-        return Optional.ofNullable( avatar );
+    public Optional<Avatar> findById(Long id) {
+        List<Avatar> avatars = jdbcTemplate.query(FETCH_SQL_BY_ID, new AvatarMapper(), id);
+        return avatars.isEmpty() ? Optional.empty() : Optional.of(avatars.get(0));
     }
 
     @Override
-    public Optional<Avatar> findByFileName( String fileName ) {
-        return Optional.empty();
+    public Optional<Avatar> findByFileName(String fileName) {
+        List<Avatar> avatars = jdbcTemplate.query(FETCH_SQL_BY_FILENAME, new AvatarMapper(), fileName);
+        return avatars.isEmpty() ? Optional.empty() : Optional.of(avatars.get(0));
     }
 
     @Override
     public List<String> findAllAvatarFileNames() {
-        return null;
+        return jdbcTemplate.query(FETCH_ALL_FILENAMES, (rs, rowNum) -> rs.getString("file_name"));
     }
 
-
     /**
-     * maps an Avatar table row into a Avatar domain object
+     * RowMapper implementation to map a row of the Avatar table to an Avatar domain
+     * object.
      */
-    class AvatarMapper implements RowMapper<Avatar> {
+    static class AvatarMapper implements RowMapper<Avatar> {
 
         @Override
-        public Avatar mapRow( ResultSet rs, int rowNum ) throws SQLException {
+        public Avatar mapRow(ResultSet rs, int rowNum) throws SQLException {
             return Avatar.builder()
-                    .id( rs.getLong( "id" ) )
-                    .fileName( rs.getString( "file_name" ) )
+                    .id(rs.getLong("id"))
+                    .fileName(rs.getString("file_name"))
                     .build();
         }
     }
