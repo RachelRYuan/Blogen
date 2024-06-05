@@ -8,9 +8,10 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 
 /**
- * Domain object that will hold user specific preferences for the Blogen web-site
- *
+ * Domain object that holds user-specific preferences for the Blogen web-site.
+ * 
  * Author: Cliff
+ * Refine: Rachel
  */
 @Data
 @NoArgsConstructor
@@ -20,22 +21,22 @@ import javax.persistence.*;
 public class UserPrefs {
 
     @Id
-    @GeneratedValue( strategy = GenerationType.IDENTITY )
-    Long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @OneToOne
-    User user;
+    private User user;
 
-    //the users Avatar
+    // The user's Avatar
     @OneToOne(fetch = FetchType.EAGER)
-    Avatar avatar;
+    private Avatar avatar;
 
     @Override
     public String toString() {
         return "UserPrefs{" +
                 "id=" + id +
-                ", userName=" + (user != null ?  user.getUserName() : "null") +
-                ", avatar='" + (avatar != null ?  avatar.getFileName() : "null") +
+                ", userName=" + (user != null ? user.getUserName() : "null") +
+                ", avatar='" + (avatar != null ? avatar.getFileName() : "null") + '\'' +
                 '}';
     }
 }

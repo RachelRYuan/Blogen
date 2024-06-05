@@ -9,63 +9,57 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Domain object containing the roles a User of blogen may have.
- * Primarily used for/by Spring Security
- *
- * @author Cliff
+ * Domain object representing the roles a user of Blogen may have.
+ * Primarily used by Spring Security.
+ * 
+ * Author: Cliff
+ * Refine: Rachel
  */
 @Data
 @NoArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of = "id")
 @Entity
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
 
     private String role;
 
     @ManyToMany(fetch = FetchType.EAGER, mappedBy = "roles")
     private List<User> users = new ArrayList<>();
 
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public List<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(List<User> users) {
-        this.users = users;
-    }
-
-    public void addUser(User user){
-        if(!this.users.contains(user)){
-            this.users.add(user);
-        }
-
-        if(!user.getRoles().contains(this)){
+    /**
+     * Adds a user to the role.
+     * Ensures both sides of the relationship are properly maintained.
+     * 
+     * @param user the user to be added to the role
+     */
+    public void addUser(User user) {
+        if (!users.contains(user)) {
+            users.add(user);
             user.getRoles().add(this);
         }
     }
 
-    public void removeUser(User user){
-        this.users.remove(user);
-        user.getRoles().remove(this);
+    /**
+     * Removes a user from the role.
+     * Ensures both sides of the relationship are properly maintained.
+     * 
+     * @param user the user to be removed from the role
+     */
+    public void removeUser(User user) {
+        if (users.remove(user)) {
+            user.getRoles().remove(this);
+        }
     }
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder( "Role{" );
-        sb.append( "id=" ).append( id );
-        sb.append( ", role='" ).append( role ).append( '\'' );
-        sb.append( '}' );
-        return sb.toString();
+        return "Role{" +
+                "id=" + id +
+                ", role='" + role + '\'' +
+                '}';
     }
 }
