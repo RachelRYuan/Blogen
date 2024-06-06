@@ -143,7 +143,7 @@ public class PostServiceImplTest {
         Page<Post> page = new PageImpl<Post>(posts);
 
         given(pageRequestBuilder.buildPageRequest(anyInt(), anyInt(), any(Sort.Direction.class), anyString())).willReturn(pageRequest);
-        given(postRepository.findAllByParentNullOrderByCreatedDesc(any(Pageable.class))).willReturn(page);
+        given(postRepository.ByParentNullOrderByCreatedDesc(any(Pageable.class))).willReturn(page);
         given(postMapper.postToPostDto(post1)).willReturn(postDTO1);
 
         PostListDTO postDTOS = postService.getPosts(-1L, pageNum, pageSize);

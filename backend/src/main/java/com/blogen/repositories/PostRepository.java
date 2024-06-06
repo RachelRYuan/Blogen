@@ -9,99 +9,96 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 /**
- * Repository interface for Post entities.
- * Provides methods to perform CRUD operations and custom queries on Post data.
- * 
- * Author: Cliff
- * Refine: Rachel
+ * Spring-Data-JPA query methods for the Post table
+ *
+ * @author Cliff
  */
 public interface PostRepository extends JpaRepository<Post, Long> {
 
   /**
-   * Find all parent posts. Parent posts have a PARENT_ID = NULL in the database.
+   * find all parent posts. Parent posts have a PARENT_ID = NULL in the database.
    * 
-   * @return a List containing all parent posts
+   * @return a List containing all parent posts.
    */
   List<Post> findAllByParentNull();
 
   /**
-   * Find all parent posts created by a user with the specified user ID.
+   * find all parent posts CREATED by a user with the specified user.id
    * 
-   * @param userId the user ID to search for
-   * @return a Page of parent posts posted by the specified user ID, ordered by
-   *         creation date in descending order
+   * @param userId - user.id to search for
+   * @return a List of parent posts, posted by the specified user id
    */
-  Page<Post> findAllByUser_IdAndParentNullOrderByCreatedDesc(Long userId, Pageable pageable);
+  // Page<Post> findAllByUser_IdAndParentNullOrderByCreatedDesc( Long userId,
+  // Pageable pageable );
 
   /**
-   * Get a page of parent posts (threads) in descending order of creation.
+   * get a page of Parent Posts (aka Threads) in descending order of creation
    * 
-   * @param pageable the pagination information
-   * @return a Page of parent posts ordered by creation date in descending order
+   * @return a Page of parent posts ordered by creation date, in descending order
    */
   Page<Post> findAllByParentNullOrderByCreatedDesc(Pageable pageable);
 
   /**
-   * Get a page of posts, parent or child, ordered by creation date.
+   * get a Page of posts, parent or child, ordered by created date
    * 
-   * @param pageable the pagination information
-   * @return a Page of posts ordered by creation date in descending order
+   * @param pageable used to specify the number of posts to retrieve
+   * @return
    */
   Page<Post> findAllByOrderByCreatedDesc(Pageable pageable);
 
   /**
-   * Get a page of posts belonging to the specified category.
+   * get a page of posts belonging to the specified category
    * 
-   * @param categoryId the category ID to search for
-   * @param pageable   the pagination information
+   * @param pageable
    * @return a Page of posts having the specified category
    */
   Page<Post> findAllByCategory_IdAndParentNull(Long categoryId, Pageable pageable);
 
   /**
-   * Get all parent posts for the specified user ID, using pagination to control
-   * the page of results returned.
+   * get all parent posts for the specified userId, using the pageable to control
+   * the page of results returned
    * 
-   * @param userId   the user ID to search for
-   * @param pageable the pagination information
-   * @return a Page of posts made by the specified user ID
+   * @param userId
+   * @param pageable
+   * @return a lists of posts made by the specified user id to be displayed on the
+   *         pageable
    */
   Page<Post> findAllByUser_IdAndParentNull(Long userId, Pageable pageable);
 
   /**
-   * Get a page of parent posts for the specified user ID and category ID.
+   * get a page of parent posts for the specified userId AND having the specified
+   * categoryId
    * 
-   * @param userId     the user ID to search for
-   * @param categoryId the category ID to search for
-   * @param pageable   the pagination information
-   * @return a Page of parent posts for the specified user ID and category ID
+   * @param userId
+   * @param categoryId
+   * @param pageable
+   * @return
    */
   Page<Post> findAllByUser_IdAndCategory_IdAndParentNull(Long userId, Long categoryId, Pageable pageable);
 
   /**
-   * Get all posts for a username ordered by creation date.
+   * Get all posts for a userName ordered by created date
    * 
-   * @param userName the username to search for
-   * @return a List of posts made by the specified username, ordered by creation
-   *         date in descending order
+   * @param name
+   * @return
    */
-  List<Post> findAllByUser_userNameOrderByCreatedDesc(String userName);
+  List<Post> findAllByUser_userNameOrderByCreatedDesc(String name);
 
   /**
-   * Searches for the specified string in the text or title of a post.
-   * This is a brute-force search using the SQL LIKE operator.
+   * searches for searchStr in the text or title of a Post. This is a brute force
+   * search using SQL LIKE operator
    * 
-   * @param searchStr the substring to search for in post text or title
-   * @param pageable  the pagination information
-   * @return a Page of posts matching the search string
+   * @param searchStr - the substring to search for in post.text or post.title
+   * @return {@link Page} containing Posts matching the searchStr
    */
-  @Query("select p from Post p where lower(p.title) like %?1% or lower(p.text) like %?1% order by p.created desc")
+  @Query("select p from Post p where lower(p.title) like %?1% or lower(p.text) like %?1% order by p.created desc ")
   Page<Post> findByTextOrTitleIgnoreCaseContaining(String searchStr, Pageable pageable);
 
   /**
-   * Get the 10 most recent posts made.
-   * 
-   * @return a List of the 10 most recent posts
+   *
+   * @return the 10 most recent posts made
    */
   List<Post> findTop10ByOrderByCreatedDesc();
+
+Object ByParentNullOrderByCreatedDesc(Pageable any);
 }

@@ -8,40 +8,24 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 /**
- * Repository interface for Category entities.
- * Provides methods to perform CRUD operations and custom queries on Category
- * data.
  * 
- * Author: Cliff
- * Refine: Rachel
+ * @author Cliff
  */
-public interface CategoryRepository extends JpaRepository<Category, Long> {
+public interface CategoryRepository extends JpaRepository<Category,Long> {
+
+
+    Category findByName( String name );
+
+
+    //this query type should automatically wrap the name variable in "%"
+    List<Category> findByNameIgnoreCaseContaining( String name );
 
     /**
-     * Find a Category by its exact name.
-     * 
-     * @param name the exact name of the Category
-     * @return the Category with the specified name, or null if not found
+     * get a 'pageable' worth of categories
+     * @param pageable
+     * @return a page of categories according to the pageable
      */
-    Category findByName(String name);
+    Page<Category> findAllBy( Pageable pageable );
 
-    /**
-     * Find Categories whose names contain the specified string, ignoring case.
-     * This method automatically performs a case-insensitive search and wraps the
-     * name variable with "%" for a LIKE search.
-     * 
-     * @param name the string to search for within Category names
-     * @return a list of Categories whose names contain the specified string,
-     *         ignoring case
-     */
-    List<Category> findByNameIgnoreCaseContaining(String name);
-
-    /**
-     * Retrieve a page of Categories based on pagination information.
-     * 
-     * @param pageable the pagination information
-     * @return a page of Categories according to the pagination information
-     */
-    Page<Category> findAll(Pageable pageable);
 
 }
