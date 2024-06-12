@@ -24,153 +24,139 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Service for RESTful operations on Blogen {@link com.blogen.domain.User}
- *
- * @author Cliff
+ * Service for RESTful operations on Blogen {@link com.blogen.domain.User}.
+ * 
+ * Author: Cliff
  */
 @Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
-    private AvatarService avatarService;
-    private PasswordEncryptionService encryptionService;
-    private RoleService roleService;
-    private UserMapper userMapper;
-
-
+    private final UserRepository userRepository;
+    private final AvatarService avatarService;
+    private final PasswordEncryptionService encryptionService;
+    private final RoleService roleService;
+    private final UserMapper userMapper;
 
     @Autowired
-    public UserServiceImpl( UserRepository userRepository,
-                            AvatarService avatarService,
-                            PasswordEncryptionService encryptionService,
-                            RoleService roleService,
-                            UserMapper userMapper ) {
+    public UserServiceImpl(UserRepository userRepository,
+                           AvatarService avatarService,
+                           PasswordEncryptionService encryptionService,
+                           RoleService roleService,
+                           UserMapper userMapper) {
         this.userRepository = userRepository;
         this.avatarService = avatarService;
-        this.userMapper = userMapper;
-        this.roleService = roleService;
         this.encryptionService = encryptionService;
+        this.roleService = roleService;
+        this.userMapper = userMapper;
     }
 
     @Override
     public UserListDTO getAllUsers() {
-        List<UserDTO> userDTOS = userRepository.findAll()
-                .stream()
-                .map( user -> {
-                    UserDTO dto = userMapper.userToUserDto( user );
-                    dto.setUserUrl( UserService.buildUserUrl( user ) );
+        List<UserDTO> userDTOS = userRepository.findAll().stream()
+                .map(user -> {
+                    UserDTO dto = userMapper.userToUserDto(user);
+                    dto.setUserUrl(UserService.buildUserUrl(user));
                     return dto;
-                } ).collect( Collectors.toList());
-        return new UserListDTO( userDTOS );
+                }).collect(Collectors.toList());
+        return new UserListDTO(userDTOS);
     }
 
     @Override
-    public UserDTO getUser( Long id ) {
-        User user = validateUserId( id );
-        UserDTO userDTO = userMapper.userToUserDto( user );
-        userDTO.setUserUrl( UserService.buildUserUrl( user ) );
+    public UserDTO getUser(Long id) {
+        User user = validateUserId(id);
+        UserDTO userDTO = userMapper.userToUserDto(user);
+        userDTO.setUserUrl(UserService.buildUserUrl(user));
         return userDTO;
     }
 
     @Override
     public User createNewUser(UserDTO userDTO) throws IllegalArgumentException {
-        if (findByUserName( userDTO.getUserName() ).isPresent() ) {
-            throw new IllegalArgumentException("user with userName=" + userDTO.getUserName() + " already exists");
+        if (findByUserName(userDTO.getUserName()).isPresent()) {
+            throw new IllegalArgumentException("User with userName=" + userDTO.getUserName() + " already exists");
         } else {
-            // create a new user
-            Role userRole = roleService.getByName( "ROLE_USER" );
-            Role apiRole = roleService.getByName("ROLE_API");
-            User user = userMapper.userDtoToUser( userDTO );
-            user.setEncryptedPassword( encryptionService.encrypt( user.getPassword() ) );
-            user.addRole( userRole );
-            user.addRole( apiRole );
-            UserPrefs prefs = buildDefaultUserPrefs();
-            user.setUserPrefs( prefs );
-            return saveUser( user );
+            User user = userMapper.userDtoToUser(userDTO);
+            user.setEncryptedPassword(encryptionService.encrypt(user.getPassword()));
+            user.addRole(roleService.getByName("ROLE_USER"));
+            user.addRole(roleService.getByName("ROLE_API"));
+            user.setUserPrefs(buildDefaultUserPrefs());
+            return saveUser(user);
         }
     }
 
-    // only the authenticated user can update their own user information, OR admins can always change user info
     @Override
-    @PreAuthorize( "hasAuthority('SCOPE_ROLE_ADMIN') || #user.getId().toString() == authentication.name" )
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN') || #user.getId().toString() == authentication.name")
     public UserDTO updateUser(User user, UserDTO userDTO) {
-        userMapper.updateUserFromDTO( userDTO, user );
-        if ( userDTO.getAvatarImage() != null ) {
-            Avatar avatar = avatarService.getAvatarByFileName( userDTO.getAvatarImage() )
-                    .orElseThrow( () -> new BadRequestException( "avatar image does not exits:" + userDTO.getAvatarImage() ) );
-            user.getUserPrefs().setAvatar( avatar );
+        userMapper.updateUserFromDTO(userDTO, user);
+        if (userDTO.getAvatarImage() != null) {
+            Avatar avatar = avatarService.getAvatarByFileName(userDTO.getAvatarImage())
+                    .orElseThrow(() -> new BadRequestException("Avatar image does not exist: " + userDTO.getAvatarImage()));
+            user.getUserPrefs().setAvatar(avatar);
         }
-        User savedUser = userRepository.save( user );
-        UserDTO returnDto = userMapper.userToUserDto( savedUser );
-        returnDto.setUserUrl( UserService.buildUserUrl( savedUser ) );
+        User savedUser = userRepository.save(user);
+        UserDTO returnDto = userMapper.userToUserDto(savedUser);
+        returnDto.setUserUrl(UserService.buildUserUrl(savedUser));
         return returnDto;
     }
 
-
     @Override
-    public User saveUser( User user ) {
-        checkAndEncryptPassword( user );
-        return userRepository.save( user );
+    public User saveUser(User user) {
+        checkAndEncryptPassword(user);
+        return userRepository.save(user);
     }
 
-    // only the authenticated user can change their password, OR admins can change all passwords
-    @PreAuthorize( "hasAuthority('SCOPE_ROLE_ADMIN') || #user.getId().toString() == authentication.name" )
+    @Override
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN') || #user.getId().toString() == authentication.name")
     @Transactional
-    @Override
-    public void changePassword( User user, PasswordRequestDTO dto) {
-        user.setPassword( dto.getPassword() );
-        checkAndEncryptPassword( user );
-        userRepository.save( user );
+    public void changePassword(User user, PasswordRequestDTO dto) {
+        user.setPassword(dto.getPassword());
+        checkAndEncryptPassword(user);
+        userRepository.save(user);
     }
 
     @Override
-    public Optional<User> findByUserName( String name ) {
-        return Optional.ofNullable( userRepository.findByUserName( name ) );
+    public Optional<User> findByUserName(String name) {
+        return Optional.ofNullable(userRepository.findByUserName(name));
     }
 
     @Override
-    public Optional<User> findById( Long id ) {
-        return userRepository.findById( id );
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
     }
-
-
 
     /**
-     * encrypts the user password if it was set on the User object
-     * @param user
-     * @return the User object with the encryptedPassword field set
+     * Encrypts the user password if it was set on the User object.
+     *
+     * @param user The user whose password needs to be encrypted.
      */
-    private void checkAndEncryptPassword( User user ) {
-        if ( user.getPassword() != null ) {
-            user.setEncryptedPassword( encryptionService.encrypt( user.getPassword() ) );
+    private void checkAndEncryptPassword(User user) {
+        if (user.getPassword() != null) {
+            user.setEncryptedPassword(encryptionService.encrypt(user.getPassword()));
         }
     }
 
     /**
-     * make sure the passed in user id exists in the repository, otherwise an exception is thrown
-     * @param id
-     * @return the {@link User} corresponding to the passed in ID
-     * @throws BadRequestException if the user was not found in the repository
+     * Validates that the passed-in user ID exists in the repository.
+     *
+     * @param id The user ID to validate.
+     * @return The User corresponding to the passed-in ID.
+     * @throws BadRequestException if the user was not found in the repository.
      */
-    public User validateUserId( Long id ) throws BadRequestException {
-        User user = userRepository.findById( id )
-                .orElseThrow( () -> new BadRequestException( "user does not exist with id:" + id ) );
-        return user;
+    private User validateUserId(Long id) throws BadRequestException {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("User does not exist with id: " + id));
     }
 
-
     /**
-     * builds a default user preferences object with default avatar image
-     * @return a UserPrefs object
+     * Builds a default user preferences object with the default avatar image.
+     *
+     * @return A UserPrefs object.
      */
     public UserPrefs buildDefaultUserPrefs() {
         UserPrefs userPrefs = new UserPrefs();
-        Avatar defaultAvatar = avatarService.getAvatarByFileName( AvatarService.DEFAULT_AVATAR )
-                .orElseThrow( () -> new BadRequestException( "default avatar image not found" ) );
-        userPrefs.setAvatar( defaultAvatar );
+        Avatar defaultAvatar = avatarService.getAvatarByFileName(AvatarService.DEFAULT_AVATAR)
+                .orElseThrow(() -> new BadRequestException("Default avatar image not found"));
+        userPrefs.setAvatar(defaultAvatar);
         return userPrefs;
     }
-
-
 }

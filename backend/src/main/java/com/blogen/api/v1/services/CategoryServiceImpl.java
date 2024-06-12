@@ -20,84 +20,73 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Category Service for REST API
- * For Categories:
- *   we can get a list of all categories
- *   get a specific category
- *   create a new category
- *   change the name of a category
+ * Service implementation for managing Blogen categories in the REST API.
+ * This service supports CRUD operations on categories, but only Blogen admins can perform these operations.
  *
- * Only Blogen Admins can perform CRUD ops on categories
- *
- * NOTE: Deleting categories is not supported in this API...for now
- *
- * @author Cliff
+ * Deleting categories is not supported in this API for now.
+ * 
+ * Author: Cliff
  */
 @Service
 @Slf4j
 public class CategoryServiceImpl implements CategoryService {
 
-    private CategoryRepository categoryRepository;
-    private CategoryMapper categoryMapper;
-    private PageRequestBuilder pageRequestBuilder;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
+    private final PageRequestBuilder pageRequestBuilder;
 
     @Autowired
-    public CategoryServiceImpl( CategoryRepository categoryRepository, CategoryMapper categoryMapper,
-                                PageRequestBuilder pageRequestBuilder ) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, CategoryMapper categoryMapper,
+                               PageRequestBuilder pageRequestBuilder) {
         this.categoryRepository = categoryRepository;
         this.categoryMapper = categoryMapper;
         this.pageRequestBuilder = pageRequestBuilder;
     }
 
     @Override
-    public CategoryListDTO getCategories( int pageNum, int pageSize ) {
-        PageRequest pageRequest = pageRequestBuilder.buildPageRequest( pageNum, pageSize, Sort.Direction.DESC,"id" );
-        //retrieve a "page" of posts
-        Page<Category> page = categoryRepository.findAllBy( pageRequest );
-
-        List<CategoryDTO> catDTOS = new ArrayList<>();
-        page.forEach( cat -> {
-            CategoryDTO dto = categoryMapper.categoryToCategoryDto( cat );
-            catDTOS.add( dto );
-        } );
-        return new CategoryListDTO( catDTOS, PageRequestBuilder.buildPageInfoResponse( page ) );
+    public CategoryListDTO getCategories(int pageNum, int pageSize) {
+        PageRequest pageRequest = pageRequestBuilder.buildPageRequest(pageNum, pageSize, Sort.Direction.DESC, "id");
+        Page<Category> page = categoryRepository.findAllBy(pageRequest);
+        List<CategoryDTO> categoryDTOs = new ArrayList<>();
+        page.forEach(category -> {
+            CategoryDTO dto = categoryMapper.categoryToCategoryDto(category);
+            categoryDTOs.add(dto);
+        });
+        return new CategoryListDTO(categoryDTOs, PageRequestBuilder.buildPageInfoResponse(page));
     }
 
     @Override
-    public CategoryDTO getCategory( Long id ) {
-        Category category = categoryRepository.findById( id ).orElseThrow( () ->
-                new BadRequestException( "category with id: " + id + " does not exist" ) );
-        CategoryDTO categoryDTO = categoryMapper.categoryToCategoryDto( category );
-        categoryDTO.setCategoryUrl( CategoryService.buildCategoryUrl( category ) );
+    public CategoryDTO getCategory(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("Category with id: " + id + " does not exist"));
+        CategoryDTO categoryDTO = categoryMapper.categoryToCategoryDto(category);
+        categoryDTO.setCategoryUrl(CategoryService.buildCategoryUrl(category));
         return categoryDTO;
     }
 
-    @PreAuthorize( "hasAuthority('SCOPE_ROLE_ADMIN')" )
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN')")
     @Override
-    public CategoryDTO createNewCategory( CategoryDTO categoryDTO ) {
-        CategoryDTO savedDTO = null;
+    public CategoryDTO createNewCategory(CategoryDTO categoryDTO) {
         try {
-            Category categoryToSave = categoryMapper.categoryDtoToCategory( categoryDTO );
-            Category savedCategory = categoryRepository.save( categoryToSave );
-            savedDTO = categoryMapper.categoryToCategoryDto( savedCategory );
-            savedDTO.setCategoryUrl( CategoryService.buildCategoryUrl( savedCategory ) );
-        } catch ( DataIntegrityViolationException e ) {
-            String message = String.format( "Category already exists with name %s", categoryDTO.getName() );
-            throw new DataIntegrityViolationException( message );
+            Category categoryToSave = categoryMapper.categoryDtoToCategory(categoryDTO);
+            Category savedCategory = categoryRepository.save(categoryToSave);
+            CategoryDTO savedDTO = categoryMapper.categoryToCategoryDto(savedCategory);
+            savedDTO.setCategoryUrl(CategoryService.buildCategoryUrl(savedCategory));
+            return savedDTO;
+        } catch (DataIntegrityViolationException e) {
+            String message = String.format("Category already exists with name %s", categoryDTO.getName());
+            log.error(message, e);
+            throw new DataIntegrityViolationException(message);
         }
-        return savedDTO;
     }
 
-    @PreAuthorize( "hasAuthority('SCOPE_ROLE_ADMIN')" )
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN')")
     @Override
-    public CategoryDTO updateCategory( Long id, CategoryDTO categoryDTO ) {
-        Category category = categoryRepository.findById( id )
-                .orElseThrow( () -> new BadRequestException( "category does not exist with id:" + id ) );
-        // update 'category' with values from any non-null fields in the DTO
-        categoryMapper.updateCategoryFromCategoryDTO( categoryDTO, category );
-        Category savedCategory = categoryRepository.save( category );
-        return categoryMapper.categoryToCategoryDto( savedCategory );
+    public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new BadRequestException("Category does not exist with id: " + id));
+        categoryMapper.updateCategoryFromCategoryDTO(categoryDTO, category);
+        Category savedCategory = categoryRepository.save(category);
+        return categoryMapper.categoryToCategoryDto(savedCategory);
     }
-    
-
 }
