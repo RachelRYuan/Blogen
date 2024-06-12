@@ -15,7 +15,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -28,108 +30,79 @@ import static java.util.stream.Collectors.toList;
 
 /**
  * Exception Handlers for REST Controllers
- *
- * @author Cliff
  */
 @Slf4j
 @ControllerAdvice("com.blogen.api.v1.controllers")
 public class RestControllerExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({NotFoundException.class})
-    @ResponseStatus(code = HttpStatus.NOT_FOUND)
+    @ExceptionHandler({ NotFoundException.class })
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<Object> handleNotFoundException(Exception exception, WebRequest request) {
-        log.error(exception.getMessage());
-        ApiGlobalError globalError = new ApiGlobalError(exception.getMessage());
-        List<ApiGlobalError> globalErrors = Arrays.asList(globalError);
-        ApiErrorsView errorsView = new ApiErrorsView(null, globalErrors);
-        return new ResponseEntity<>(errorsView, new HttpHeaders(), HttpStatus.NOT_FOUND);
-
+        log.error("NotFoundException: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler({BadRequestException.class})
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({ BadRequestException.class })
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<Object> handleBadRequestException(Exception exception, WebRequest request) {
-        log.error(exception.getMessage());
-        ApiGlobalError globalError = new ApiGlobalError(exception.getMessage());
-        List<ApiGlobalError> globalErrors = Arrays.asList(globalError);
-        ApiErrorsView errorsView = new ApiErrorsView(null, globalErrors);
-        return new ResponseEntity<>(errorsView, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+        log.error("BadRequestException: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    //return a 401 code when a user provides invalid login credentials are token
-    @ExceptionHandler({BadCredentialsException.class, AccessDeniedException.class})
-    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler({ BadCredentialsException.class, AccessDeniedException.class })
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ResponseEntity<Object> handleUnauthorizedException(Exception exception, WebRequest request) {
-        log.error(exception.getMessage());
-        ApiGlobalError globalError = new ApiGlobalError(exception.getMessage());
-        List<ApiGlobalError> globalErrors = Arrays.asList(globalError);
-        ApiErrorsView errorsView = new ApiErrorsView(null, globalErrors);
-        return new ResponseEntity<>(errorsView, new HttpHeaders(), HttpStatus.UNAUTHORIZED);
+        log.error("UnauthorizedException: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
-    @ExceptionHandler({DataIntegrityViolationException.class})
-    @ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-    public ResponseEntity<Object> handleRowExists(Exception exception, WebRequest request) {
-        log.error(exception.getMessage());
-        ApiGlobalError globalError = new ApiGlobalError(exception.getMessage());
-        List<ApiGlobalError> globalErrors = Arrays.asList(globalError);
-        ApiErrorsView errorsView = new ApiErrorsView(null, globalErrors);
-        return new ResponseEntity<>(errorsView, new HttpHeaders(), HttpStatus.UNPROCESSABLE_ENTITY);
+    @ExceptionHandler({ DataIntegrityViolationException.class })
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ResponseEntity<Object> handleDataIntegrityViolationException(Exception exception, WebRequest request) {
+        log.error("DataIntegrityViolationException: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.UNPROCESSABLE_ENTITY, exception.getMessage());
     }
 
     @Override
-    @ResponseStatus(code = HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        log.error(ex.getMessage());
-        String methodParamName = (ex instanceof MethodArgumentTypeMismatchException) ? ((MethodArgumentTypeMismatchException) ex).getName() : "";
-        List<ApiFieldError> apiFieldErrors = new ArrayList<>();
-        List<ApiGlobalError> apiGlobalErrors = new ArrayList<>();
-        ApiGlobalError globalError = new ApiGlobalError();
-        globalError.setMessage("invalid type sent for parameter: " + methodParamName + "  with value:" + ex.getValue());
-        apiGlobalErrors.add(globalError);
-
-        ApiErrorsView apiErrorsView = new ApiErrorsView(apiFieldErrors, apiGlobalErrors);
-
-        return new ResponseEntity<>(apiErrorsView, HttpStatus.BAD_REQUEST);
+        log.error("TypeMismatchException: {}", ex.getMessage());
+        String methodParamName = (ex instanceof MethodArgumentTypeMismatchException)
+                ? ((MethodArgumentTypeMismatchException) ex).getName()
+                : "";
+        String errorMessage = String.format("Invalid type for parameter: %s with value: %s", methodParamName, ex.getValue());
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, errorMessage);
     }
 
-    //TODO WebBinder errors are caught here, may need to return different HttpStatus
     @Override
-    @ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-    public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception,
-                                                               HttpHeaders headers,
-                                                               HttpStatus status,
-                                                               WebRequest request) {
-        log.error(exception.getMessage());
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        log.error("MethodArgumentNotValidException: {}", exception.getMessage());
         BindingResult bindingResult = exception.getBindingResult();
 
-        List<ApiFieldError> apiFieldErrors = bindingResult
-                .getFieldErrors()
-                .stream()
-                .map(fieldError ->
-                        new ApiFieldError(fieldError.getField(), fieldError.getDefaultMessage(), fieldError.getRejectedValue()))
+        List<ApiFieldError> apiFieldErrors = bindingResult.getFieldErrors().stream()
+                .map(fieldError -> new ApiFieldError(fieldError.getField(), fieldError.getDefaultMessage(), fieldError.getRejectedValue()))
                 .collect(toList());
 
-        List<ApiGlobalError> apiGlobalErrors = bindingResult
-                .getGlobalErrors()
-                .stream()
-                .map(globalError -> new ApiGlobalError(
-                        globalError.getCode())
-                )
+        List<ApiGlobalError> apiGlobalErrors = bindingResult.getGlobalErrors().stream()
+                .map(globalError -> new ApiGlobalError(globalError.getCode()))
                 .collect(toList());
 
         ApiErrorsView apiErrorsView = new ApiErrorsView(apiFieldErrors, apiGlobalErrors);
-
         return new ResponseEntity<>(apiErrorsView, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<Object> handleOtherExceptions(Exception exception) {
-        log.error(exception.getMessage());
-        ApiGlobalError globalError = new ApiGlobalError(exception.getMessage());
+        log.error("Exception: {}", exception.getMessage());
+        return buildResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+    }
+
+    private ResponseEntity<Object> buildResponseEntity(HttpStatus status, String message) {
+        ApiGlobalError globalError = new ApiGlobalError(message);
         List<ApiGlobalError> globalErrors = Arrays.asList(globalError);
         ApiErrorsView errorsView = new ApiErrorsView(null, globalErrors);
-        return new ResponseEntity<>(errorsView, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(errorsView, new HttpHeaders(), status);
     }
 }

@@ -5,12 +5,7 @@ import com.blogen.api.v1.model.UserDTO;
 import com.blogen.api.v1.services.AuthorizationService;
 import com.blogen.api.v1.services.PostService;
 import com.blogen.api.v1.validators.UserDtoSignupValidator;
-import com.blogen.exceptions.NotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +19,9 @@ import javax.validation.Valid;
 
 /**
  * Controller for handling endpoints that do NOT require users to be authenticated and authorized,
- * i.e. new-user sign-ups, checking if a username exists,
- *
+ * such as new-user sign-ups, checking if a username exists, etc.
  */
-@Tag(name = "Authorization", description = "operations for logging in users")
+@Tag(name = "Authorization", description = "Operations for logging in users")
 @Slf4j
 @RestController
 @RequestMapping(AuthorizationController.BASE_URL)
@@ -35,9 +29,9 @@ public class AuthorizationController {
 
     public static final String BASE_URL = "/api/v1/auth";
 
-    private AuthorizationService authorizationService;
-    private UserDtoSignupValidator userSignupValidator;
-    private PostService postService;
+    private final AuthorizationService authorizationService;
+    private final UserDtoSignupValidator userSignupValidator;
+    private final PostService postService;
 
     @Autowired
     public AuthorizationController(AuthorizationService authorizationService,
@@ -53,31 +47,30 @@ public class AuthorizationController {
         binder.addValidators(userSignupValidator);
     }
 
-
     @SecurityRequirements
-    @Operation(summary = "sign-up a new user")
-    @PostMapping(value = "/signup", produces = {"application/json"}, consumes = {"application/json"})
+    @Operation(summary = "Sign up a new user")
+    @PostMapping(value = "/signup", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public UserDTO signupUser(@RequestBody @Valid UserDTO userDTO) {
-        log.debug("signup user userDTO=" + userDTO);
+        log.debug("Signing up user: {}", userDTO);
         return authorizationService.signUpUser(userDTO);
     }
 
     @SecurityRequirements
-    @Operation(summary = "get the latest posts")
-    @GetMapping(value = "/latestPosts", produces = {"application/json"})
+    @Operation(summary = "Get the latest posts")
+    @GetMapping(value = "/latestPosts", produces = MediaType.APPLICATION_JSON_VALUE)
     public PostListDTO latestPosts(@RequestParam(name = "limit", defaultValue = "9") int limit) {
-        log.debug("get latest posts limit={}", limit);
+        log.debug("Fetching latest posts with limit: {}", limit);
         return postService.getPosts(-1L, 0, limit);
     }
 
     @SecurityRequirements
-    @Operation(summary = "check if a user name exists")
-    @GetMapping(value = "/username/{name}", produces = {"application/json"})
+    @Operation(summary = "Check if a username exists")
+    @GetMapping(value = "/username/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public Boolean userNameExists(@PathVariable("name") String userName) {
         Boolean userExists = authorizationService.userNameExists(userName);
-        log.debug("check user name exists: {} = {}", userName, userExists);
+        log.debug("Checking if username exists: {} - {}", userName, userExists);
         return userExists;
     }
 }

@@ -12,10 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Controller for retrieving user preferences
- * <p>
- * Author: Cliff
  */
-@Tag(name = "UserPreferences", description = "operations on user avatar file names")
+@Tag(name = "UserPreferences", description = "Operations on user avatar file names")
 @Slf4j
 @RestController
 @RequestMapping(UserPrefsController.BASE_URL)
@@ -23,20 +21,24 @@ public class UserPrefsController {
 
     public static final String BASE_URL = "/api/v1/userPrefs";
 
-    private AvatarService avatarService;
+    private final AvatarService avatarService;
 
     @Autowired
     public UserPrefsController(AvatarService avatarService) {
         this.avatarService = avatarService;
     }
 
-    //TODO possible security annotation needed
-    @Operation(summary = "returns a list of all Avatar file names")
-    @GetMapping(value = "/avatars", produces = {"application/json"})
+    /**
+     * Returns a list of all Avatar file names.
+     *
+     * @return an AvatarResponse containing a list of avatar image names.
+     */
+    @Operation(summary = "Returns a list of all Avatar file names")
+    @GetMapping(value = "/avatars", produces = "application/json")
     public AvatarResponse avatarImageFileNames() {
+        log.debug("Fetching all avatar image file names");
         return AvatarResponse.builder()
                 .avatars(avatarService.getAllAvatarImageNames())
                 .build();
-
     }
 }

@@ -16,34 +16,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.security.Principal;
 
 /**
  * Controller for REST operations in Blogen {@link com.blogen.domain.User}
- *
- * @author Cliff
  */
-@Tag(name = "User", description = "operations on blogen users")
+@Tag(name = "User", description = "Operations on Blogen users")
 @Slf4j
 @RestController
 @RequestMapping(UserController.BASE_URL)
-//TODO possibly add securitySchemas to all methods
 public class UserController {
 
     public static final String BASE_URL = "/api/v1/users";
 
-    private UserService userService;
-    private PostService postService;
-    private UpdateUserValidator updateUserValidator;
-    private PasswordValidator passwordValidator;
+    private final UserService userService;
+    private final PostService postService;
+    private final UpdateUserValidator updateUserValidator;
+    private final PasswordValidator passwordValidator;
 
     @Autowired
     public UserController(UserService userService,
@@ -69,58 +61,56 @@ public class UserController {
     @GetMapping("/authenticate")
     @ResponseBody
     public UserDTO getAuthenticatedUserInfo(Authentication authentication) {
-        log.debug("get user info for :{}", authentication.getName());
+        log.debug("Get user info for: {}", authentication.getName());
         return userService.getUser(Long.parseLong(authentication.getName()));
     }
 
-    @Operation(summary = "get a list of all users")
-    @GetMapping(produces = {"application/json"})
+    @Operation(summary = "Get a list of all users")
+    @GetMapping(produces = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public UserListDTO getAllUsers() {
-        log.debug("getAllUsers");
+        log.debug("Getting all users");
         return userService.getAllUsers();
     }
 
-    @Operation(summary = "get a specific user by id")
-    @GetMapping(value = "/{id}", produces = {"application/json"})
+    @Operation(summary = "Get a specific user by ID")
+    @GetMapping(value = "/{id}", produces = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public UserDTO getUser(@PathVariable("id") Long id) {
-        log.debug("getUser id=" + id);
+        log.debug("Get user by ID: {}", id);
         return userService.getUser(id);
     }
 
-    @Operation(summary = "get posts made by a user")
-    @GetMapping(value = "/{id}/posts", produces = {"application/json"})
+    @Operation(summary = "Get posts made by a user")
+    @GetMapping(value = "/{id}/posts", produces = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public PostListDTO getUserPosts(@PathVariable("id") Long id,
                                     @RequestParam(value = "page", defaultValue = "0") Integer page,
                                     @RequestParam(value = "limit", defaultValue = "5") Integer limit,
                                     @RequestParam(value = "category", defaultValue = "-1") Long category) {
-        log.debug("getUserPosts id={} page={} limit={} category={}", id, page, limit, category);
-        // category =-1L indicates ignore category and get posts for any category
+        log.debug("Get user posts - ID: {}, page: {}, limit: {}, category: {}", id, page, limit, category);
         return postService.getPostsForUser(id, category, page, limit);
     }
 
-    @Operation(summary = "update field(s) of an existing user")
-    @PutMapping(value = "/{id}", produces = {"application/json"}, consumes = {"application/json"})
+    @Operation(summary = "Update field(s) of an existing user")
+    @PutMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public UserDTO updateUser(@PathVariable("id") Long id,
-                              @Valid @RequestBody UserDTO userDTO
-    ) {
-        log.debug("update user id=" + id + " userDTO=" + userDTO);
+                              @Valid @RequestBody UserDTO userDTO) {
+        log.debug("Update user - ID: {}, userDTO: {}", id, userDTO);
         User user = userService.findById(id)
-                .orElseThrow(() -> new BadRequestException("user does not exist with id:" + id));
+                .orElseThrow(() -> new BadRequestException("User does not exist with ID: " + id));
         return userService.updateUser(user, userDTO);
     }
 
-    @Operation(summary = "change a users password")
-    @PutMapping(value = "/{id}/password", consumes = {"application/json"})
+    @Operation(summary = "Change a user's password")
+    @PutMapping(value = "/{id}/password", consumes = "application/json")
     @ResponseStatus(HttpStatus.OK)
     public void updatePassword(@PathVariable("id") Long id,
                                @Valid @RequestBody PasswordRequestDTO passwordRequestDTO) {
-        log.debug("change password user id=" + id + " passwordDTO= " + passwordRequestDTO);
+        log.debug("Change password - user ID: {}, passwordDTO: {}", id, passwordRequestDTO);
         User user = userService.findById(id)
-                .orElseThrow(() -> new BadRequestException("user does not exist with id:" + id));
+                .orElseThrow(() -> new BadRequestException("User does not exist with ID: " + id));
         userService.changePassword(user, passwordRequestDTO);
     }
 }
