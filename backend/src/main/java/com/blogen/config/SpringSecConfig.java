@@ -28,56 +28,47 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
-
 /**
  * Blogen Security Configuration.
  * <p>
- * In this example project, Spring Boot is performing four roles: Rest Server, OAuth2 Login server,
- * OAuth2 Resource Server, and HTTP Server.
+ * Configures security for the application, supporting OAuth2 login, JWT authentication, and ignoring certain static resources.
+ * </p>
  * <p>
- * Therefore, this configuration enables support for
- * - enabling users to login using a username and password
- * - accepting a Blogen issued JWT as an authentication/authorization mechanism when accessing the REST Api endpoints
- * located at /api/v1/**   NOTE that we are intentionally leaving the "/api/v1/auth/**" path unsecured so that users
- * can log in, or register as a new user without first needing a JWT
- * - enabling support for using Spring Security as an OAuth2 login server
- * - enabling support for using Spring Security as a OAuth2 resource server so that we can leverage its functionality
- * to create, accept and validate our own JWTs
- * - ignoring paths that serve .html, .css, .js, images etc... since the Vue.js frontend client will be requesting these
+ * Features:
+ * - User login with username and password
+ * - JWT authentication for REST API endpoints
+ * - OAuth2 login server
+ * - OAuth2 resource server for creating, accepting, and validating JWTs
+ * - Ignoring static resource paths for the frontend client
+ * </p>
  * <p>
- * After a successful login, any JWT tokens received from an OAuth2 provider will be converted into our own custom
- * JWT be copying relevant claims from the provider. This is done in the OAuth2UserLoginServiceImpl class
- *
- * @author Cliff
+ * After a successful login, any JWT tokens from an OAuth2 provider are converted into custom JWTs by copying relevant claims.
+ * </p>
+ * Author: Cliff
  */
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SpringSecConfig extends WebSecurityConfigurerAdapter {
 
-
     @Value("${jwt.public.key}")
-    RSAPublicKey key;
+    private RSAPublicKey key;
 
     @Value("${jwt.private.key}")
-    RSAPrivateKey priv;
-
+    private RSAPrivateKey priv;
 
     @Bean
-    // used to encode user passwords
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     @Bean
-        // used to enable decoding JWTs using our public key
-    JwtDecoder jwtDecoder() {
+    public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(this.key).build();
     }
 
-    // used to encode and self sign our JWTs using a private key
     @Bean
-    JwtEncoder jwtEncoder() {
+    public JwtEncoder jwtEncoder() {
         JWK jwk = new RSAKey.Builder(this.key).privateKey(this.priv).build();
         JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
         return new NimbusJwtEncoder(jwks);
@@ -85,9 +76,9 @@ public class SpringSecConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        //these matchers will allow swagger UI, h2-console, and image files through spring-security
         web.ignoring()
-                .antMatchers("/v3/api-docs/**",
+                .antMatchers(
+                        "/v3/api-docs/**",
                         "/swagger-resources/configuration/ui",
                         "/swagger-resources",
                         "/swagger-resources/configuration/security",
@@ -98,53 +89,24 @@ public class SpringSecConfig extends WebSecurityConfigurerAdapter {
                         "/actuator/**",
                         "/favicon.ico",
                         "/**/*.png", "/**/*.gif", "/**/*.svg", "/**/*.jpg",
-                        "/**/*.html", "/**/*.css", "/**/*.js", "/**/*.map");
+                        "/**/*.html", "/**/*.css", "/**/*.js", "/**/*.map"
+                );
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-                .cors()
-                .and()
-                .csrf(AbstractHttpConfigurer::disable)
-                .logout((configurer) -> configurer.logoutSuccessUrl("/"))
-                .authorizeHttpRequests((authorize) -> authorize
-                        .antMatchers("/", "/api/v1/auth/**", "/login/form").permitAll()
-                        .antMatchers("/api/**").hasAuthority("SCOPE_ROLE_API")
-                        .anyRequest().authenticated()
-                )
-                .oauth2Login((c) -> c.defaultSuccessUrl("/login/oauth2/success", true))
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-                //.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling((exceptions) -> exceptions
-                        .authenticationEntryPoint(new RestApiAuthenticationEntryPoint())
-                        .accessDeniedHandler(new RestApiAccessDeniedHandler())
-                );
+        http.cors().and().csrf(AbstractHttpConfigurer::disable)
+            .logout(configurer -> configurer.logoutSuccessUrl("/"))
+            .authorizeHttpRequests(authorize -> authorize
+                    .antMatchers("/", "/api/v1/auth/**", "/login/form").permitAll()
+                    .antMatchers("/api/**").hasAuthority("SCOPE_ROLE_API")
+                    .anyRequest().authenticated()
+            )
+            .oauth2Login(c -> c.defaultSuccessUrl("/login/oauth2/success", true))
+            .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+            .exceptionHandling(exceptions -> exceptions
+                    .authenticationEntryPoint(new RestApiAuthenticationEntryPoint())
+                    .accessDeniedHandler(new RestApiAccessDeniedHandler())
+            );
     }
-
-//    // NOTE: we can't configure a custom SecurityFilterChain when using WebSecurityConfigurerAdapter, so we are
-//    // using the HttpSecurity configurer above
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        http
-//                .cors()
-//                .and()
-//                .csrf(AbstractHttpConfigurer::disable)
-//                .logout((configurer) -> configurer.logoutSuccessUrl("/"))
-//                .authorizeHttpRequests((authorize) -> authorize
-//                        .antMatchers("/","/api/v1/auth/**", "/login/form").permitAll()
-//                        .antMatchers("/api/**").hasRole("API")
-//                        .anyRequest().authenticated()
-//                )
-//                .oauth2Login((c) -> c.defaultSuccessUrl("/login/oauth2/success", true))
-//                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-//                .sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                .exceptionHandling((exceptions) -> exceptions
-//                        .authenticationEntryPoint(new RestApiAuthenticationEntryPoint())
-//                        .accessDeniedHandler(new RestApiAccessDeniedHandler())
-//                );
-//        return http.build();
-//    }
-
-
 }

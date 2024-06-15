@@ -1,30 +1,32 @@
 package com.blogen.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * This configuration will enable cross origin requests Globally. This is typically needed by
- * javascript single page applications that run on their own (separate) development servers
- *
+ * Configuration to enable cross-origin requests globally.
+ * <p>
+ * This is typically needed by JavaScript single-page applications that run on their own separate development servers.
+ * </p>
  * Author: Cliff
  */
 @Configuration
-//@Profile( {"dev"} )
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    // Note that CORS has also been enabled in the SpringSecConfig
+    private static final long MAX_AGE_SECS = 3600;
+
+    /**
+     * Configure CORS mappings.
+     *
+     * @param registry the {@link CorsRegistry} to configure
+     */
     @Override
-    public void addCorsMappings( CorsRegistry registry ) {
-        long MAX_AGE_SECS = 3600;
-        registry.addMapping( "/**" )
-                //.allowedOrigins( "*" )
-                //.allowedHeaders("*")
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
                 .allowedOriginPatterns("*localhost*", "https://play.google.com/**")
                 .allowCredentials(true)
-                .allowedMethods( "HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE" )
+                .allowedMethods("HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE")
                 .exposedHeaders("Authorization")
                 .maxAge(MAX_AGE_SECS);
     }
