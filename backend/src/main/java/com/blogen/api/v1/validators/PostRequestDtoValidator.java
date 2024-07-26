@@ -7,26 +7,23 @@ import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;
 
 /**
- * Validate required fields of a {@link com.blogen.api.v1.model.PostDTO}
- * @author Cliff
+ * Validate required fields of a {@link com.blogen.api.v1.model.PostRequestDTO}
  */
 @Component
 public class PostRequestDtoValidator implements Validator {
 
-
     @Override
-    public boolean supports( Class<?> clazz ) {
-        return PostRequestDTO.class.equals( clazz );
+    public boolean supports(Class<?> clazz) {
+        return PostRequestDTO.class.equals(clazz);
     }
 
     @Override
-    public void validate( Object target, Errors errors ) {
+    public void validate(Object target, Errors errors) {
         PostRequestDTO postDTO = (PostRequestDTO) target;
 
-        //these are PostRequestDTO fields which are required
-        ValidationUtils.rejectIfEmptyOrWhitespace( errors, "title","required.title","title is a required field but was null or empty" );
-        ValidationUtils.rejectIfEmptyOrWhitespace( errors, "text","required.text","text is a required field but was null or empty" );
-        ValidationUtils.rejectIfEmptyOrWhitespace( errors, "categoryId","required.categoryName","categoryId is a required field but was null or empty" );
-
+        // Validate required fields
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "title", "required.title", "Title is a required field and cannot be null or empty.");
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "text", "required.text", "Text is a required field and cannot be null or empty.");
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "categoryId", "required.categoryId", "Category ID is a required field and cannot be null or empty.");
     }
 }

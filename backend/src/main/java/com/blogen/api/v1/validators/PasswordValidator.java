@@ -8,34 +8,30 @@ import org.springframework.validation.Validator;
 
 /**
  * Validate required fields when PUTing {@link com.blogen.api.v1.model.PasswordRequestDTO}
- * @author Cliff
  */
 @Component
 public class PasswordValidator implements Validator {
 
+    private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final int MAX_PASSWORD_LENGTH = 255;
 
     @Override
-    public boolean supports( Class<?> clazz ) {
-        return PasswordRequestDTO.class.equals( clazz );
+    public boolean supports(Class<?> clazz) {
+        return PasswordRequestDTO.class.equals(clazz);
     }
 
     @Override
-    public void validate( Object target, Errors errors ) {
+    public void validate(Object target, Errors errors) {
         PasswordRequestDTO dto = (PasswordRequestDTO) target;
 
-        ValidationUtils.rejectIfEmptyOrWhitespace( errors, "password",
-                "required.password", "password is a required field but was null or empty" );
+        ValidationUtils.rejectIfEmptyOrWhitespace(errors, "password", "required.password", "Password is a required field and cannot be null or empty.");
 
-
-        if ( inValidLength( dto.getPassword(), 8, 255 ) )
-            errors.rejectValue( "password","invalid.password","password must be >= 8 characters" );
+        if (isInvalidLength(dto.getPassword(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH)) {
+            errors.rejectValue("password", "invalid.password", "Password must be between " + MIN_PASSWORD_LENGTH + " and " + MAX_PASSWORD_LENGTH + " characters.");
+        }
     }
 
-    private static boolean hasValue(String data) {
-        return data != null && data.length() > 0;
-    }
-
-    private static boolean inValidLength( String data, int min, int max) {
-        return data.length() < min || data.length() > max;
+    private static boolean isInvalidLength(String data, int min, int max) {
+        return data == null || data.length() < min || data.length() > max;
     }
 }

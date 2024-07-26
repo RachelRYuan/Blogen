@@ -6,46 +6,51 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 /**
- * Validate required fields when PUTing {@link UserDTO}
- * @author Cliff
+ * Validate required fields when updating {@link UserDTO}
  */
 @Component
 public class UpdateUserValidator implements Validator {
 
+    private static final int MIN_NAME_LENGTH = 2;
+    private static final int MAX_NAME_LENGTH = 255;
+    private static final int MIN_PASSWORD_LENGTH = 8;
+    private static final int MAX_PASSWORD_LENGTH = 255;
 
     @Override
-    public boolean supports( Class<?> clazz ) {
-        return UserDTO.class.equals( clazz );
+    public boolean supports(Class<?> clazz) {
+        return UserDTO.class.equals(clazz);
     }
 
     @Override
-    public void validate( Object target, Errors errors ) {
+    public void validate(Object target, Errors errors) {
         UserDTO userDTO = (UserDTO) target;
 
-        // when updating a user's details, any null or blank fields will be ignored
+        // Validate first name
+        if (hasValue(userDTO.getFirstName()) && isInvalidLength(userDTO.getFirstName(), MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
+            errors.rejectValue("firstName", "invalid.firstName", "First name must be between " + MIN_NAME_LENGTH + " and " + MAX_NAME_LENGTH + " characters.");
+        }
 
-//        if (hasValue( userDTO.getEmail() ) && userDTO.getEmail().length() > 0 && userDTO.getEmail().length() <= 8)
-//            errors.rejectValue( "email","invalid.email","email address is not valid" );
+        // Validate last name
+        if (hasValue(userDTO.getLastName()) && isInvalidLength(userDTO.getLastName(), MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
+            errors.rejectValue("lastName", "invalid.lastName", "Last name must be between " + MIN_NAME_LENGTH + " and " + MAX_NAME_LENGTH + " characters.");
+        }
 
-        if (hasValue( userDTO.getFirstName() ) && inValidLength( userDTO.getFirstName(), 2, 255 ) )
-            errors.rejectValue( "firstName","invalid.firstName","first name must be greater than 2 characters" );
+        // Validate username
+        if (hasValue(userDTO.getUserName()) && isInvalidLength(userDTO.getUserName(), MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
+            errors.rejectValue("userName", "invalid.userName", "Username must be between " + MIN_NAME_LENGTH + " and " + MAX_NAME_LENGTH + " characters.");
+        }
 
-        if (hasValue( userDTO.getLastName() ) && inValidLength( userDTO.getLastName(), 2, 255 ) )
-            errors.rejectValue( "lastName","invalid.lastName","last name must be greater than 2 characters" );
-
-        // todo check if username exists, may do this in front end
-        if (hasValue( userDTO.getUserName() ) && inValidLength( userDTO.getUserName(), 2, 255 ) )
-            errors.rejectValue( "userName","invalid.userName","username must be greater than 2 characters" );
-
-        if (hasValue( userDTO.getPassword() ) && inValidLength( userDTO.getPassword(), 8, 255 ) )
-            errors.rejectValue( "password","invalid.password","password must be greater than 8 characters" );
+        // Validate password
+        if (hasValue(userDTO.getPassword()) && isInvalidLength(userDTO.getPassword(), MIN_PASSWORD_LENGTH, MAX_PASSWORD_LENGTH)) {
+            errors.rejectValue("password", "invalid.password", "Password must be between " + MIN_PASSWORD_LENGTH + " and " + MAX_PASSWORD_LENGTH + " characters.");
+        }
     }
 
     private static boolean hasValue(String data) {
-        return data != null && data.length() > 0;
+        return data != null && !data.trim().isEmpty();
     }
 
-    private static boolean inValidLength( String data, int min, int max) {
+    private static boolean isInvalidLength(String data, int min, int max) {
         return data.length() < min || data.length() > max;
     }
 }
