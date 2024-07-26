@@ -7,19 +7,33 @@ import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 /**
- * MapStruct mappers for mapping between {@link com.blogen.domain.UserPrefs} and {@link com.blogen.api.v1.model.UserPrefsDTO}
- *
- * Author: Cliff
+ * MapStruct mappers for mapping between {@link UserPrefs} and {@link UserPrefsDTO}.
+ * <p>
+ * This interface is implemented automatically by MapStruct at compile time.
+ * </p>
+ * <p>
+ * Usage Example:
+ * <pre>
+ * {@code
+ * UserPrefsMapper mapper = UserPrefsMapper.INSTANCE;
+ * UserPrefsDTO userPrefsDTO = mapper.userPrefsToUserPrefsDto(userPrefs);
+ * UserPrefs userPrefs = mapper.userPrefsDtoToUserPrefs(userPrefsDTO);
+ * }
+ * </pre>
+ * </p>
+ * </p>
+ * </p>
  */
 @Mapper(componentModel = "spring")
 public interface UserPrefsMapper {
 
-    UserPrefsMapper INSTANCE = Mappers.getMapper( UserPrefsMapper.class );
+    UserPrefsMapper INSTANCE = Mappers.getMapper(UserPrefsMapper.class);
 
-    @Mapping( target = "avatarImage", source = "avatar.fileName")
-    UserPrefsDTO userPrefsToUserPrefsDto( UserPrefs userPrefs );
+    // Map UserPrefs to UserPrefsDTO
+    @Mapping(target = "avatarImage", source = "avatar.fileName")
+    UserPrefsDTO userPrefsToUserPrefsDto(UserPrefs userPrefs);
 
-    @Mapping( target = "avatar.fileName", source = "avatarImage")
-    UserPrefs userPrefsDtoToUserPrefs( UserPrefsDTO userPrefsDTO );
-
+    // Map UserPrefsDTO to UserPrefs
+    @Mapping(target = "avatar.fileName", source = "avatarImage")
+    UserPrefs userPrefsDtoToUserPrefs(UserPrefsDTO userPrefsDTO);
 }
